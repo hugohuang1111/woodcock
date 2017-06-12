@@ -43,6 +43,7 @@ func (c *connectWS) send(data []byte) {
 }
 
 func (c *connectWS) onRecv(data []byte) {
+	glog.Info("connect onrecv data")
 	t, e := jsonparser.GetString(data, "type")
 	if nil != e {
 		glog.Errorf("wsConnection get type failed:%v", e)
@@ -73,7 +74,7 @@ func (c *connectWS) run() {
 	for c.runFlag {
 		mt, message, err := c.socket.ReadMessage()
 		if err != nil {
-			glog.Warning("Connect disconnect: %v", err)
+			glog.Warningf("Connect (%d) disconnect: %v", c.connID, err)
 			c.runFlag = false
 			break
 		}

@@ -7,5 +7,6 @@ const (
 )
 
 const (
-	MOD_MSG_TYPE_CLIENT = "client"
+	MOD_MSG_TYPE_CLIENT     = "client"
+	MOD_MSG_TYPE_DISCONNECT = "disconnect"
 )

@@ -22,7 +22,7 @@ var (
 
 func tryInitDBInstance() *sql.DB {
 	if nil == db {
-		err := initDB("poker", "poker1111", "mysql", "poker", "127.0.0.1", "3306")
+		err := initDB("woodcock", "woodcock1111", "mysql", "woodcock", "127.0.0.1", "3306")
 		if nil != err {
 			glog.Fatal("DB init failed:", err)
 		}

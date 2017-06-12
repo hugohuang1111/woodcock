@@ -38,39 +38,52 @@ func (m *Module) OnEvent(msg *module.Message) {
 		m.response(msg, constants.GenErrorMsg(constants.ERROR_MSG_FORMAT_ERROR))
 		return
 	}
-	s := strings.Split(v, ":")
-	cmd := s[1]
 
-	var resp map[string]interface{}
-	switch cmd {
-	case "register":
+	switch msg.Type {
+	case module.MOD_MSG_TYPE_DISCONNECT:
 		{
-			resp = register(msg.ConnectID, msg.Payload)
+			logout(msg.ConnectID, msg.Payload)
 		}
-	case "login":
+	case module.MOD_MSG_TYPE_CLIENT:
 		{
-			resp = login(msg.ConnectID, msg.Payload)
-		}
-	case "logout":
-		{
-			resp = logout(msg.ConnectID, msg.Payload)
+			s := strings.Split(v, ":")
+			cmd := s[1]
+			var resp map[string]interface{}
+			switch cmd {
+			case "register":
+				{
+					resp = register(msg.ConnectID, msg.Payload)
+				}
+			case "login":
+				{
+					resp = login(msg.ConnectID, msg.Payload)
+				}
+			case "logout":
+				{
+					resp = logout(msg.ConnectID, msg.Payload)
+				}
+			default:
+				{
+					glog.Error("user unknow cmd:", cmd)
+				}
+			}
+
+			if nil != resp {
+				m.response(msg, resp)
+			}
 		}
 	default:
 		{
-			glog.Error("user unknow cmd:", cmd)
+			glog.Error("user unknow msg type:", msg.Type)
 		}
-	}
-
-	if nil != resp {
-		m.response(msg, resp)
 	}
 }
 
 func (m *Module) response(req *module.Message, payload map[string]interface{}) {
 	msg := new(module.Message)
 	msg.ConnectID = req.ConnectID
-	msg.Sender = req.Sender
-	msg.Recver = req.Recver
+	msg.Sender = module.MOD_USER
+	msg.Recver = req.Sender
 	msg.Userid = req.Userid
 	msg.Type = req.Type
 

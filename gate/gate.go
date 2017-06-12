@@ -1,6 +1,12 @@
 package gate
 
-import "sync"
+import (
+	"sync"
+
+	"github.com/golang/glog"
+	"github.com/hugohuang1111/woodcock/module"
+	"github.com/hugohuang1111/woodcock/router"
+)
 
 var (
 	connMap       map[uint64]connect
@@ -22,4 +28,20 @@ func clientConnect(c connect) {
 
 func clientDisconnect(c connect) {
 	delete(connMap, c.ID())
+
+	m := new(module.Message)
+	m.Recver = module.MOD_USER
+	m.Sender = module.MOD_GATE
+	m.Type = module.MOD_MSG_TYPE_DISCONNECT
+	m.ConnectID = c.ID()
+	router.Route(m)
+}
+
+func handlerClientMsg(connID uint64, payload []byte) {
+	c, exist := connMap[connID]
+	if !exist {
+		glog.Warning("gate not find connect:", connID)
+		return
+	}
+	c.send(payload)
 }

@@ -7,16 +7,34 @@ import (
 )
 
 // UserRegister user register
-func UserRegister(name, passwd string) (bool, string) {
+func UserRegister(name, passwd string) (uint64, error) {
 	n := "'" + name + "'"
 	pw := "'" + passwd + "'"
 	sql := newstatement().insert("user").columns("name", "passwd").values(n, pw).toString()
 	suc, err := Exec(sql)
-	if nil == err {
-		return suc, ""
+	if !suc {
+		return 0, err
 	}
 
-	return suc, err.Error()
+	sql = newstatement().selects("id").from("user").where("name", name, false).toString()
+	rows, err := Query(sql)
+	if nil != err {
+		return 0, err
+	}
+	defer rows.Close()
+
+	var userID uint64
+	if rows.Next() {
+		err = rows.Scan(&userID)
+		if nil != err {
+			return 0, err
+		}
+	} else {
+		err = errors.New("not found user")
+		return 0, err
+	}
+
+	return userID, err
 }
 
 //UserLogin user login
@@ -53,30 +71,6 @@ func UserCount() (uint64, error) {
 
 // QueryUserInfo query user info
 func QueryUserInfo(uid uint64) (name string, err error) {
-	sql := newstatement().selects("id", "name").from("user").where("id", string(uid), false).toString()
-	rows, e := Query(sql)
-	if nil != e {
-		err = e
-		return
-	}
-	defer rows.Close()
-
-	var userID uint64
-	var userName string
-	if rows.Next() {
-		err = rows.Scan(&userID, &userName)
-		if nil != err {
-			return
-		}
-	} else {
-		err = errors.New("not found user")
-		return
-	}
-
-	return userName, nil
-}
-
-func QueryUserIDByName(name, password string) (name string, err error) {
 	sql := newstatement().selects("id", "name").from("user").where("id", string(uid), false).toString()
 	rows, e := Query(sql)
 	if nil != e {

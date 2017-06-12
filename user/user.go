@@ -1,12 +1,13 @@
 package user
 
 import (
+	"strconv"
 	"sync"
 	"time"
 
 	"github.com/buger/jsonparser"
-	"github.com/hugohuang1111/poker/db"
 	"github.com/hugohuang1111/woodcock/constants"
+	"github.com/hugohuang1111/woodcock/db"
 )
 
 var (
@@ -25,7 +26,7 @@ func getNano() string {
 	nanos = now.UnixNano()
 	guestCreateMutex.Unlock()
 
-	return string(nanos)
+	return strconv.FormatInt(nanos, 10)
 }
 
 func register(connectID uint64, msg []byte) map[string]interface{} {
@@ -41,10 +42,10 @@ func register(connectID uint64, msg []byte) map[string]interface{} {
 		passwd = "111111"
 	}
 
-	suc, _ := db.UserRegister(name, passwd)
+	uid, err := db.UserRegister(name, passwd)
 
-	if suc {
-		activityUsers[connectID] = 0 //TODO uid
+	if nil == err {
+		activityUsers[connectID] = uid
 		constants.SetRespError(resp, constants.ERROR_SUCCESS)
 		resp["user"] = name
 		resp["passwd"] = passwd
