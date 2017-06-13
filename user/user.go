@@ -32,6 +32,10 @@ func getNano() string {
 func register(connectID uint64, msg []byte) map[string]interface{} {
 	resp := make(map[string]interface{})
 	resp["version"] = 1
+	t, eType := jsonparser.GetUnsafeString(msg, "type")
+	if nil == eType {
+		resp["type"] = t
+	}
 
 	name, _ := jsonparser.GetUnsafeString(msg, "name")
 	passwd, _ := jsonparser.GetUnsafeString(msg, "password")
@@ -59,6 +63,10 @@ func register(connectID uint64, msg []byte) map[string]interface{} {
 func login(connectID uint64, msg []byte) map[string]interface{} {
 	resp := make(map[string]interface{})
 	resp["version"] = 1
+	t, eType := jsonparser.GetUnsafeString(msg, "type")
+	if nil == eType {
+		resp["type"] = t
+	}
 
 	name, eName := jsonparser.GetUnsafeString(msg, "name")
 	pw, ePW := jsonparser.GetUnsafeString(msg, "password")
@@ -80,7 +88,18 @@ func login(connectID uint64, msg []byte) map[string]interface{} {
 func logout(connectID uint64, msg []byte) map[string]interface{} {
 	resp := make(map[string]interface{})
 	resp["version"] = 1
+	t, eType := jsonparser.GetUnsafeString(msg, "type")
+	if nil == eType {
+		resp["type"] = t
+	}
+
 	delete(activityUsers, connectID)
 
 	return resp
+}
+
+func getUIDByConnID(connID uint64) uint64 {
+	uid, _ := activityUsers[connID]
+
+	return uid
 }

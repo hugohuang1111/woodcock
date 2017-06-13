@@ -1,4 +1,4 @@
-package user
+package room
 
 import (
 	"encoding/json"
@@ -11,11 +11,11 @@ import (
 	"github.com/hugohuang1111/woodcock/router"
 )
 
-//Module gate module
+//Module room module
 type Module struct {
 }
 
-//NewModule new gate module
+//NewModule new room module
 func NewModule() *Module {
 	m := new(Module)
 
@@ -24,7 +24,7 @@ func NewModule() *Module {
 
 //OnInit module init
 func (m *Module) OnInit() {
-	glog.Info("user init")
+	glog.Info("room init")
 }
 
 //OnDestroy module destroy
@@ -36,37 +36,38 @@ func (m *Module) OnEvent(msg *module.Message) {
 	switch msg.Type {
 	case module.MOD_MSG_TYPE_DISCONNECT:
 		{
-			logout(msg.ConnectID, msg.Payload)
+			leave(msg.ConnectID, msg.Payload)
 		}
 	case module.MOD_MSG_TYPE_GET_USER_ID:
-		{
-			uid := getUIDByConnID(msg.ConnectID)
-			msg.ConnectID = uid
-			m.response(msg, nil)
+		if 0 == msg.Userid {
+			m.response(msg, constants.GenErrorMsg(constants.ERROR_NOT_AUTHOR))
+			return
 		}
+		fallthrough
 	case module.MOD_MSG_TYPE_CLIENT:
 		{
-			v, e := jsonparser.GetString(msg.Payload, "type")
+			t, e := jsonparser.GetString(msg.Payload, "type")
 			if nil != e {
 				m.response(msg, constants.GenErrorMsg(constants.ERROR_MSG_FORMAT_ERROR))
 				return
 			}
 
-			s := strings.Split(v, ":")
+			if 0 == msg.Userid {
+				m.forward(msg, module.MOD_USER)
+				return
+			}
+
+			s := strings.Split(t, ":")
 			cmd := s[1]
 			var resp map[string]interface{}
 			switch cmd {
-			case "register":
+			case "entry":
 				{
-					resp = register(msg.ConnectID, msg.Payload)
+					resp = entry(msg.Userid, msg.Payload)
 				}
-			case "login":
+			case "leave":
 				{
-					resp = login(msg.ConnectID, msg.Payload)
-				}
-			case "logout":
-				{
-					resp = logout(msg.ConnectID, msg.Payload)
+					resp = leave(msg.Userid, msg.Payload)
 				}
 			default:
 				{
@@ -80,7 +81,7 @@ func (m *Module) OnEvent(msg *module.Message) {
 		}
 	default:
 		{
-			glog.Error("user unknow msg type:", msg.Type)
+			glog.Error("room unknow msg type:", msg.Type)
 		}
 	}
 }
@@ -92,20 +93,20 @@ func (m *Module) response(req *module.Message, payload map[string]interface{}) {
 	msg.Recver = req.Sender
 	msg.Userid = req.Userid
 	msg.Type = req.Type
-	msg.Payload = req.Payload
 
-	if nil != payload {
-		jsonString, err := json.Marshal(payload)
-		if nil != err {
-			glog.Error("marshal resp to string failed:", err)
-			return
-		}
-		msg.Payload = jsonString
+	jsonString, err := json.Marshal(payload)
+	if nil != err {
+		glog.Error("marshal resp to string failed:", err)
+		return
 	}
+	msg.Payload = jsonString
 
 	router.Route(msg)
 }
 
-func (m *Module) handler(cmd string) {
-
+func (m *Module) forward(msg *module.Message, receiver string) {
+	msg.Sender = module.MOD_ROOM
+	msg.Recver = receiver
+	msg.Type = module.MOD_MSG_TYPE_GET_USER_ID
+	router.Route(msg)
 }

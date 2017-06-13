@@ -7,6 +7,8 @@ const (
 	ERROR_REGISTER_FAIL    = 1001
 	ERROR_PARAM_NIL        = 1002
 	ERROR_LOGIN_FAIL       = 1003
+	ERROR_PARAM_WRONG      = 1004
+	ERROR_NOT_AUTHOR       = 1005
 )
 
 var (
@@ -15,6 +17,8 @@ var (
 		ERROR_REGISTER_FAIL:    "register failed",
 		ERROR_PARAM_NIL:        "param is nil",
 		ERROR_LOGIN_FAIL:       "login failed",
+		ERROR_PARAM_WRONG:      "param wrong",
+		ERROR_NOT_AUTHOR:       "not authorize",
 	}
 )
 

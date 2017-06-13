@@ -43,11 +43,10 @@ func (c *connectWS) send(data []byte) {
 }
 
 func (c *connectWS) onRecv(data []byte) {
-	glog.Info("connect onrecv data")
 	t, e := jsonparser.GetString(data, "type")
 	if nil != e {
 		glog.Error("wsConnection get type failed:", e)
-		c.sendError(constants.ERROR_MSG_FORMAT_ERROR)
+		c.sendError(constants.ERROR_MSG_FORMAT_ERROR, "")
 		c.runFlag = false
 		return
 	}
@@ -55,7 +54,7 @@ func (c *connectWS) onRecv(data []byte) {
 	s := strings.Split(t, ":")
 	if 2 != len(s) {
 		glog.Error("connect ws onRecv type error ", s)
-		c.sendError(constants.ERROR_MSG_FORMAT_ERROR)
+		c.sendError(constants.ERROR_MSG_FORMAT_ERROR, t)
 		c.runFlag = false
 		return
 	}
@@ -96,11 +95,12 @@ func (c *connectWS) close() {
 	c.runFlag = false
 }
 
-func (c *connectWS) sendError(e int) {
+func (c *connectWS) sendError(e int, t string) {
 	resp := make(map[string]interface{})
 	resp["version"] = 1
 	resp["error"] = e
 	resp["description"] = constants.ErrorMap[e]
+	resp["type"] = t
 
 	jsonString, err := json.Marshal(resp)
 	if nil != err {
