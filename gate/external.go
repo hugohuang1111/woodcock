@@ -36,7 +36,7 @@ func (m *Module) OnEvent(msg *module.Message) {
 		}
 	default:
 		{
-			glog.Warning("gate unknow msg type")
+			glog.Warning("gate unknow msg type:", msg.Type)
 		}
 	}
 }

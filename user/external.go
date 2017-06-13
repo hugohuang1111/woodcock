@@ -33,12 +33,6 @@ func (m *Module) OnDestroy() {
 
 //OnEvent module event
 func (m *Module) OnEvent(msg *module.Message) {
-	v, e := jsonparser.GetString(msg.Payload, "type")
-	if nil != e {
-		m.response(msg, constants.GenErrorMsg(constants.ERROR_MSG_FORMAT_ERROR))
-		return
-	}
-
 	switch msg.Type {
 	case module.MOD_MSG_TYPE_DISCONNECT:
 		{
@@ -46,6 +40,12 @@ func (m *Module) OnEvent(msg *module.Message) {
 		}
 	case module.MOD_MSG_TYPE_CLIENT:
 		{
+			v, e := jsonparser.GetString(msg.Payload, "type")
+			if nil != e {
+				m.response(msg, constants.GenErrorMsg(constants.ERROR_MSG_FORMAT_ERROR))
+				return
+			}
+
 			s := strings.Split(v, ":")
 			cmd := s[1]
 			var resp map[string]interface{}

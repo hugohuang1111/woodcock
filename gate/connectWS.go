@@ -46,7 +46,7 @@ func (c *connectWS) onRecv(data []byte) {
 	glog.Info("connect onrecv data")
 	t, e := jsonparser.GetString(data, "type")
 	if nil != e {
-		glog.Errorf("wsConnection get type failed:%v", e)
+		glog.Error("wsConnection get type failed:", e)
 		c.sendError(constants.ERROR_MSG_FORMAT_ERROR)
 		c.runFlag = false
 		return
