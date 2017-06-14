@@ -62,9 +62,11 @@ func (c *connectWS) onRecv(data []byte) {
 	m := new(module.Message)
 	m.Recver = name
 	m.Sender = module.MOD_GATE
-	m.Type = module.MOD_MSG_TYPE_CLIENT
-	m.Payload = data
-	m.ConnectID = c.ID()
+	m.Type = module.MsgTypeNormal
+	m.Payload = make(map[string]interface{})
+	m.Payload[module.PayloadKeyClient] = data
+	m.Payload[module.PayloadKeyConnectID] = c.connID
+
 	router.Route(m)
 }
 

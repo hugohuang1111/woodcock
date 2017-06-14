@@ -5,7 +5,7 @@ import (
 	"github.com/hugohuang1111/woodcock/constants"
 )
 
-func entry(uid uint64, payload []byte) map[string]interface{} {
+func entry(uid uint64, msg []byte) map[string]interface{} {
 	resp := make(map[string]interface{})
 	resp["version"] = 1
 	t, _ := jsonparser.GetUnsafeString(payload, "type")
@@ -15,7 +15,9 @@ func entry(uid uint64, payload []byte) map[string]interface{} {
 	if 0 == roomID {
 		constants.SetRespError(resp, constants.ERROR_PARAM_WRONG)
 	} else {
-
+		constants.SetRespError(resp, constants.ERROR_SUCCESS)
+		t := getOrCreateTable(uint64(roomID))
+		t.sitDown(uid)
 	}
 
 	return resp

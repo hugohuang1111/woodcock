@@ -24,6 +24,7 @@ func End() {
 
 //Route route message
 func Route(msg *module.Message) {
+	glog.Infof("router Route %s -> %s ", msg.Sender, msg.Recver)
 	inChan <- msg
 }
 

@@ -3,7 +3,6 @@ package room
 import (
 	"time"
 
-	"github.com/golang/glog"
 	"github.com/hugohuang1111/woodcock/module"
 	"github.com/hugohuang1111/woodcock/router"
 )
@@ -27,6 +26,8 @@ type table struct {
 func newTable() *table {
 	t := new(table)
 	t.invitRobotID = 9000
+	t.updateChan = make(chan bool, 1024)
+	go t.play()
 	return t
 }
 
@@ -34,7 +35,6 @@ func (t *table) sitDown(uid uint64) {
 	for idx, val := range t.users {
 		if 0 == val {
 			t.users[idx] = uid
-			glog.Infof("room user %d sit down", uid)
 			t.updateChan <- true
 			break
 		}
@@ -55,7 +55,9 @@ func (t *table) play() {
 		<-t.updateChan
 		switch t.phase {
 		case roomPhaseWaiting:
-			t.robotEntryTimer.Stop()
+			if nil != t.robotEntryTimer {
+				t.robotEntryTimer.Stop()
+			}
 			t.robotEntryTimer = time.AfterFunc(5*time.Second, func() {
 				msg := new(module.Message)
 				msg.Sender = module.MOD_ROOM

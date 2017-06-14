@@ -33,20 +33,22 @@ func (m *Module) OnDestroy() {
 
 //OnEvent module event
 func (m *Module) OnEvent(msg *module.Message) {
+	connID := module.GetConnectID(msg.Payload)
+	clientData := module.GetClientData(msg.Payload)
 	switch msg.Type {
-	case module.MOD_MSG_TYPE_DISCONNECT:
+	case module.MsgTypeDisconnect:
 		{
-			logout(msg.ConnectID, msg.Payload)
+			logout(connID, clientData)
 		}
-	case module.MOD_MSG_TYPE_GET_USER_ID:
+	case module.MsgTypeGetUserID:
 		{
-			uid := getUIDByConnID(msg.ConnectID)
-			msg.ConnectID = uid
+			uid := getUIDByConnID(connID)
+			msg.Payload[module.PayloadKeyUserID] = uid
 			m.response(msg, nil)
 		}
-	case module.MOD_MSG_TYPE_CLIENT:
+	case module.MsgTypeClient:
 		{
-			v, e := jsonparser.GetString(msg.Payload, "type")
+			v, e := jsonparser.GetString(clientData, "type")
 			if nil != e {
 				m.response(msg, constants.GenErrorMsg(constants.ERROR_MSG_FORMAT_ERROR))
 				return
@@ -58,15 +60,15 @@ func (m *Module) OnEvent(msg *module.Message) {
 			switch cmd {
 			case "register":
 				{
-					resp = register(msg.ConnectID, msg.Payload)
+					resp = register(connID, clientData)
 				}
 			case "login":
 				{
-					resp = login(msg.ConnectID, msg.Payload)
+					resp = login(connID, clientData)
 				}
 			case "logout":
 				{
-					resp = logout(msg.ConnectID, msg.Payload)
+					resp = logout(connID, clientData)
 				}
 			default:
 				{
@@ -87,10 +89,8 @@ func (m *Module) OnEvent(msg *module.Message) {
 
 func (m *Module) response(req *module.Message, payload map[string]interface{}) {
 	msg := new(module.Message)
-	msg.ConnectID = req.ConnectID
-	msg.Sender = module.MOD_USER
 	msg.Recver = req.Sender
-	msg.Userid = req.Userid
+	msg.Sender = module.MOD_USER
 	msg.Type = req.Type
 	msg.Payload = req.Payload
 
@@ -100,7 +100,7 @@ func (m *Module) response(req *module.Message, payload map[string]interface{}) {
 			glog.Error("marshal resp to string failed:", err)
 			return
 		}
-		msg.Payload = jsonString
+		msg.Payload[module.PayloadKeyClientData] = jsonString
 	}
 
 	router.Route(msg)

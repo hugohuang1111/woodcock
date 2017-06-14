@@ -3,6 +3,7 @@ package woodcock
 import (
 	"github.com/hugohuang1111/woodcock/gate"
 	"github.com/hugohuang1111/woodcock/module"
+	"github.com/hugohuang1111/woodcock/room"
 	"github.com/hugohuang1111/woodcock/router"
 	"github.com/hugohuang1111/woodcock/user"
 )
@@ -14,6 +15,7 @@ func Run() {
 	router.Start()
 	module.Register(module.MOD_GATE, gate.NewModule())
 	module.Register(module.MOD_USER, user.NewModule())
+	module.Register(module.MOD_ROOM, room.NewModule())
 	module.Run()
 
 	<-close
