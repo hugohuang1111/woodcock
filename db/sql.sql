@@ -15,6 +15,7 @@ GRANT ALL ON poker.* TO 'poker'@'localhost';
 -- select database
 USE poker;
 
+ALTER TABLE user AUTO_INCREMENT=10001;
 -- create user table
 CREATE TABLE IF NOT EXISTS user (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
