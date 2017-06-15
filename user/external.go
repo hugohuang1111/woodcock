@@ -37,9 +37,17 @@ func (m *Module) OnEvent(msg *module.Message) {
 	clientData := module.GetClientData(msg.Payload)
 	switch msg.Type {
 	case module.MsgTypeDisconnect:
-		{
-			logout(connID, clientData)
+		m := new(module.Message)
+		m.Recver = module.MOD_ROOM
+		m.Sender = module.MOD_USER
+		m.Type = module.MsgTypeDisconnect
+		if nil == m.Payload {
+			m.Payload = make(map[string]interface{})
 		}
+		m.Payload[module.PayloadKeyUserID] = activityUsers[connID]
+		router.Route(m)
+
+		logout(connID, clientData)
 	case module.MsgTypeGetUserID:
 		{
 			uid := getUIDByConnID(connID)

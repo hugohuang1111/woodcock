@@ -29,14 +29,12 @@ func (m *Module) OnDestroy() {
 
 //OnEvent module event
 func (m *Module) OnEvent(msg *module.Message) {
+	connID := module.GetConnectID(msg.Payload)
+	clientData := module.GetClientData(msg.Payload)
 	switch msg.Type {
-	case module.MOD_MSG_TYPE_CLIENT:
-		{
-			handlerClientMsg(msg.ConnectID, msg.Payload)
-		}
+	case module.MsgTypeClient:
+		handlerClientMsg(connID, clientData)
 	default:
-		{
-			glog.Warning("gate unknow msg type:", msg.Type)
-		}
+		glog.Warning("gate unknow msg type:", msg.Type)
 	}
 }

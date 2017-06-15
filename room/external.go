@@ -37,9 +37,10 @@ func (m *Module) OnEvent(msg *module.Message) {
 	clientData := module.GetClientData(msg.Payload)
 	switch msg.Type {
 	case module.MsgTypeDisconnect:
-		leave(connID, clientData)
+		leave(connID, uID, clientData)
 	case module.MsgTypeEntryRoom:
-		entry(uID, nil)
+		rID := module.GetUint64(msg.Payload, module.PayloadKeyRoomID)
+		entry(connID, uID, rID, nil)
 	case module.MsgTypeGetUserID:
 		if 0 == uID {
 			message := new(module.Message)
@@ -57,6 +58,8 @@ func (m *Module) OnEvent(msg *module.Message) {
 			m.send(message, resp)
 			return
 		}
+		msg.Sender = module.MOD_GATE
+		msg.Type = module.MsgTypeClient
 		fallthrough
 	case module.MsgTypeClient:
 		cmd := module.GetClientDataCmd(clientData)
@@ -72,9 +75,9 @@ func (m *Module) OnEvent(msg *module.Message) {
 		var resp map[string]interface{}
 		switch cmd {
 		case "entry":
-			resp = entry(uID, clientData)
+			resp = entry(connID, uID, 0, clientData)
 		case "leave":
-			resp = leave(uID, clientData)
+			resp = leave(connID, uID, clientData)
 		default:
 			glog.Error("user unknow cmd:", cmd)
 		}

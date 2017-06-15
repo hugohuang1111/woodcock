@@ -9,6 +9,7 @@ const (
 	ERROR_LOGIN_FAIL       = 1003
 	ERROR_PARAM_WRONG      = 1004
 	ERROR_NOT_AUTHOR       = 1005
+	ERROR_ROOM_FULL        = 1006
 )
 
 var (
@@ -19,6 +20,7 @@ var (
 		ERROR_LOGIN_FAIL:       "login failed",
 		ERROR_PARAM_WRONG:      "param wrong",
 		ERROR_NOT_AUTHOR:       "not authorize",
+		ERROR_ROOM_FULL:        "user full in room",
 	}
 )
 

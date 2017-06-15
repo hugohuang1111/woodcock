@@ -1,20 +1,20 @@
 package room
 
 var (
-	tableMap map[uint64]*table
+	tableMap map[uint64]*room
 )
 
 func init() {
-	tableMap = make(map[uint64]*table)
+	tableMap = make(map[uint64]*room)
 }
 
-func getOrCreateTable(tid uint64) *table {
-	t, exist := tableMap[tid]
+func getOrCreateTable(rid uint64) *room {
+	t, exist := tableMap[rid]
 	if exist {
 		return t
 	}
-	t = newTable()
-	tableMap[tid] = t
+	t = newRoom(rid)
+	tableMap[rid] = t
 
 	return t
 }

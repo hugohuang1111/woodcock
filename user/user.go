@@ -16,7 +16,7 @@ var (
 )
 
 func init() {
-	activityUsers = make(map[uint64]uint64)
+	activityUsers = make(map[uint64]uint64) //connID->userID
 }
 
 func getNano() string {
@@ -78,6 +78,7 @@ func login(connectID uint64, msg []byte) map[string]interface{} {
 	if suc, uid := db.UserLogin(name, pw); suc {
 		constants.SetRespError(resp, constants.ERROR_SUCCESS)
 		activityUsers[connectID] = uid
+		resp["userID"] = uid
 	} else {
 		constants.SetRespError(resp, constants.ERROR_LOGIN_FAIL)
 	}

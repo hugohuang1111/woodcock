@@ -19,4 +19,6 @@ const (
 	PayloadKeyClientData = "clientData"
 	PayloadKeyConnectID  = "connectID"
 	PayloadKeyUserID     = "userID"
+	PayloadKeyRoomID     = "roomID"
+	PayloadKeyCustom     = "custom"
 )

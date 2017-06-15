@@ -32,8 +32,9 @@ func clientDisconnect(c connect) {
 	m := new(module.Message)
 	m.Recver = module.MOD_USER
 	m.Sender = module.MOD_GATE
-	m.Type = module.MOD_MSG_TYPE_DISCONNECT
-	m.ConnectID = c.ID()
+	m.Type = module.MsgTypeDisconnect
+	m.Payload = make(map[string]interface{})
+	m.Payload[module.PayloadKeyConnectID] = c.ID()
 	router.Route(m)
 }
 

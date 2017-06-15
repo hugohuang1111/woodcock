@@ -15,11 +15,11 @@ type Message struct {
 }
 
 func GetConnectID(payload map[string]interface{}) uint64 {
-	return getUint64(payload, PayloadKeyConnectID)
+	return GetUint64(payload, PayloadKeyConnectID)
 }
 
 func GetUserID(payload map[string]interface{}) uint64 {
-	return getUint64(payload, PayloadKeyUserID)
+	return GetUint64(payload, PayloadKeyUserID)
 }
 
 func GetClientData(payload map[string]interface{}) []byte {
@@ -40,7 +40,7 @@ func GetClientDataCmd(clientData []byte) string {
 	return ""
 }
 
-func getUint64(payload map[string]interface{}, key string) uint64 {
+func GetUint64(payload map[string]interface{}, key string) uint64 {
 	v, exist := payload[key]
 	if !exist {
 		return 0
