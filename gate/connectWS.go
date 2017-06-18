@@ -16,10 +16,12 @@ type connectWS struct {
 	socket  *websocket.Conn
 	runFlag bool
 	connID  uint64
+	sendCh  chan []byte
 }
 
 func newConnectWS(socket *websocket.Conn) connect {
 	c := new(connectWS)
+	c.sendCh = make(chan []byte, 1024)
 	c.socket = socket
 	c.runFlag = true
 
@@ -35,11 +37,7 @@ func (c *connectWS) ID() uint64 {
 }
 
 func (c *connectWS) send(data []byte) {
-	if nil == c.socket {
-		glog.Error("send fail websocket is nil")
-		return
-	}
-	c.socket.WriteMessage(websocket.TextMessage, data)
+	c.sendCh <- data
 }
 
 func (c *connectWS) onRecv(data []byte) {
@@ -72,6 +70,7 @@ func (c *connectWS) onRecv(data []byte) {
 
 func (c *connectWS) run() {
 	clientConnect(c)
+	go c.sendroutie()
 	for c.runFlag {
 		mt, message, err := c.socket.ReadMessage()
 		if err != nil {
@@ -110,4 +109,16 @@ func (c *connectWS) sendError(e int, t string) {
 		return
 	}
 	c.send(jsonString)
+}
+
+func (c *connectWS) sendroutie() {
+	for c.runFlag {
+		data := <-c.sendCh
+
+		if nil == c.socket {
+			glog.Error("send fail websocket is nil")
+			return
+		}
+		c.socket.WriteMessage(websocket.TextMessage, data)
+	}
 }

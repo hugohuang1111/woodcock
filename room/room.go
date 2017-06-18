@@ -1,7 +1,11 @@
 package room
 
 import (
+	"crypto/sha512"
+	"encoding/binary"
 	"encoding/json"
+	"math/rand"
+	"sort"
 	"time"
 
 	"github.com/golang/glog"
@@ -10,17 +14,18 @@ import (
 )
 
 const (
-	roomPhaseWaiting = 0
-	roomPhaseShuffle = 1
-	roomPhaseDealing = 2
-	roomPhasePlaying = 3
-	roomPhaseSettle  = 4
+	roomPhaseWaiting      = 0
+	roomPhaseShuffle      = 1
+	roomPhaseDealing      = 2
+	roomPhaseMakeAAbandon = 3
+	roomPhasePlaying      = 4
+	roomPhaseSettle       = 5
 )
 
 const (
-	suitDot       = "dot"
-	suitBamboo    = "bamboo"
-	suitCharacter = "character"
+	suitDot       = 1
+	suitBamboo    = 2
+	suitCharacter = 3
 )
 
 const (
@@ -30,8 +35,8 @@ const (
 )
 
 type tile struct {
-	Suit string `json:"suit"` //dot, bamboo, character
-	Rank int    `json:"rank"`
+	Suit int `json:"suit"` //dot, bamboo, character
+	Rank int `json:"rank"`
 }
 
 type meldTile struct {
@@ -44,6 +49,7 @@ type tiles struct {
 	HoldTiles    [][]tile     `json:"holdTiles"`    //持有的牌,手上的牌
 	MeldTiles    [][]meldTile `json:"meldTiles"`    //碰杠的牌
 	WallTiles    [][]tile     `json:"wallTiles"`    //牌墙
+	AbandonTile  [4]int       `json:"abandonTile"`  //缺的牌
 }
 
 type room struct {
@@ -54,6 +60,8 @@ type room struct {
 	invitRobotID    uint64
 	updateChan      chan bool
 	userTiles       tiles
+	banker          int
+	current         int
 }
 
 func newRoom(id uint64) *room {
@@ -134,21 +142,17 @@ func (r *room) play() {
 					}
 				})
 			} else {
-				r.phase = roomPhaseShuffle
+				r.phase = roomPhaseDealing
 				r.updateChan <- true
 			}
 		case roomPhaseShuffle:
-			r.shuffleTiles()
-			time.AfterFunc(5*time.Second, func() {
-				r.phase = roomPhaseDealing
-				r.updateChan <- true
-			})
 		case roomPhaseDealing:
-			r.dealingTiles()
-			time.AfterFunc(5*time.Second, func() {
-				r.phase = roomPhasePlaying
+			r.shuffleAndDealingTiles()
+			time.AfterFunc(1*time.Second, func() {
+				r.phase = roomPhaseMakeAAbandon
 				r.updateChan <- true
 			})
+		case roomPhaseMakeAAbandon:
 		case roomPhasePlaying:
 		case roomPhaseSettle:
 		default:
@@ -158,12 +162,117 @@ func (r *room) play() {
 	}
 }
 
-func (r *room) shuffleTiles() {
+func (r *room) shuffleAndDealingTiles() {
+	rawCards := rand.Perm(108)
+	walls := make([]map[string]int, 0, 4)
+	t := map[string]int{
+		"start":  0,
+		"length": 26,
+	}
+	walls = append(walls, t)
+	t = map[string]int{
+		"start":  26,
+		"length": 28,
+	}
+	walls = append(walls, t)
+	t = map[string]int{
+		"start":  54,
+		"length": 26,
+	}
+	walls = append(walls, t)
+	t = map[string]int{
+		"start":  80,
+		"length": 28,
+	}
+	walls = append(walls, t)
 
+	int64ToBytes := func(i int64) []byte {
+		var buf = make([]byte, 8)
+		binary.BigEndian.PutUint64(buf, uint64(i))
+		return buf
+	}
+	bytesToInt64 := func(buf []byte) int64 {
+		return int64(binary.BigEndian.Uint64(buf))
+	}
+	sumBytes := sha512.Sum512(int64ToBytes(time.Now().UnixNano()))
+	rand.Seed(bytesToInt64(sumBytes[1:9]))
+	die1 := rand.Intn(6) + 1
+	rand.Seed(bytesToInt64(sumBytes[10:18]))
+	die2 := rand.Intn(6) + 1
+	grabStartChair := (die1 + die2 + r.banker - 1) % 4
+	grabStartPos := die1
+	if grabStartPos > die2 {
+		grabStartPos = die2
+	}
+	grabStartPos *= 2
+
+	start, _ := walls[grabStartChair]["start"]
+	start += grabStartPos
+
+	grabTiles := func(start, len int) (arr []int, pos int) {
+		arr = make([]int, 0, len)
+		p := start
+		for i := 0; i < len; i++ {
+			p %= 108
+			arr = append(arr, rawCards[p])
+			rawCards[p] = -1
+			p++
+		}
+
+		pos = p
+		return
+	}
+	i2t := func(i int) tile {
+		var s int
+		switch {
+		case i < 37:
+			s = suitDot
+		case i < 73:
+			s = suitBamboo
+		case i < 109:
+			s = suitCharacter
+		default:
+			glog.Error("i2t, shoule be here wrong i", i)
+		}
+		i %= 9
+		i++
+		return tile{Rank: i, Suit: s}
+	}
+	var grabArr []int
+	for i := 0; i < 4; i++ {
+		tiles := make([]tile, 0, 14)
+		if i == r.banker {
+			grabArr, start = grabTiles(start, 14)
+		} else {
+			grabArr, start = grabTiles(start, 13)
+		}
+		for _, v := range grabArr {
+			tiles = append(tiles, i2t(v))
+		}
+		r.userTiles.HoldTiles[i] = tiles
+	}
+
+	for i, wall := range walls {
+		start, _ := wall["start"]
+		length, _ := wall["length"]
+		wallTiles := make([]tile, 0, 28)
+		for i := 0; i < length; i++ {
+			v := rawCards[start+i]
+			if v >= 0 {
+				wallTiles = append(wallTiles, i2t(v))
+			}
+		}
+		r.userTiles.WallTiles[i] = wallTiles
+	}
+	r.sortTiles()
 }
 
-func (r *room) dealingTiles() {
-
+func (r *room) sortTiles() {
+	tiles := new(sortTiles)
+	for _, hold := range r.userTiles.HoldTiles {
+		tiles.tiles = hold
+		sort.Sort(tiles)
+	}
 }
 
 func (r *room) broadcastScene() {
@@ -172,7 +281,8 @@ func (r *room) broadcastScene() {
 	scene["type"] = "room:scene"
 	scene["phase"] = r.phase
 	scene["users"] = r.users
-	scene["banker"] = -1 //chair id
+	scene["banker"] = r.banker //chair id
+	scene["curUser"] = r.current
 	scene["tiles"] = r.userTiles
 
 	sceneString, err := json.Marshal(scene)
@@ -195,4 +305,27 @@ func (r *room) broadcastScene() {
 			router.Route(msg)
 		}
 	}
+}
+
+type sortTiles struct {
+	tiles []tile
+}
+
+func (t *sortTiles) Len() int {
+	return len(t.tiles)
+}
+
+func (t *sortTiles) Less(i, j int) bool {
+	if t.tiles[i].Suit < t.tiles[j].Suit {
+		return true
+	} else if t.tiles[i].Suit > t.tiles[j].Suit {
+		return false
+	} else if t.tiles[i].Rank < t.tiles[j].Rank {
+		return true
+	}
+	return false
+}
+
+func (t *sortTiles) Swap(i, j int) {
+	t.tiles[i], t.tiles[j] = t.tiles[j], t.tiles[i]
 }
