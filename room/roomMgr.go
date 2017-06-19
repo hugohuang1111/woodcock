@@ -62,3 +62,28 @@ func leave(connID, uID uint64, payload []byte) map[string]interface{} {
 	delete(userConnMap, uID)
 	return resp
 }
+
+func abandonSuit(uID uint64, payload []byte) map[string]interface{} {
+	resp := make(map[string]interface{})
+	resp["version"] = 1
+	t, eType := jsonparser.GetUnsafeString(payload, "type")
+	if nil == eType {
+		resp["type"] = t
+	}
+	suit, eType := jsonparser.GetInt(payload, "suit")
+
+	var e error
+	if info, ok := userConnMap[uID]; ok {
+		r := getOrCreateTable(info.roomID)
+		e = r.abandonSuit(uID, int(suit))
+	}
+	if nil == e {
+		constants.SetRespError(resp, constants.ERROR_SUCCESS)
+	} else {
+		constants.SetRespError(resp, constants.ERROR_ABANDON_SUIT_FAIL)
+	}
+
+	delete(userConnMap, uID)
+	return resp
+
+}

@@ -4,6 +4,7 @@ import (
 	"crypto/sha512"
 	"encoding/binary"
 	"encoding/json"
+	"errors"
 	"math/rand"
 	"sort"
 	"time"
@@ -62,6 +63,7 @@ type room struct {
 	userTiles       tiles
 	banker          int
 	current         int
+	abandonSuits    [4]int
 }
 
 func newRoom(id uint64) *room {
@@ -118,6 +120,62 @@ func (r *room) userCount() int {
 	return i
 }
 
+func (r *room) abandonSuit(userID uint64, suit int) error {
+	if roomPhaseMakeAAbandon != r.phase {
+		return errors.New("phase not right")
+	}
+
+	for i, id := range r.users {
+		if id == userID {
+			r.abandonSuits[i] = suit
+		}
+	}
+
+	r.goToPlaying()
+
+	return nil
+}
+
+func (r *room) forceAbandonSuit() {
+	for i, suit := range r.abandonSuits {
+		if 0 == suit {
+			var dot int
+			var bamboo int
+			var character int
+			for _, tile := range r.userTiles.HoldTiles[i] {
+				switch tile.Suit {
+				case suitDot:
+					dot++
+				case suitBamboo:
+					bamboo++
+				case suitCharacter:
+					character++
+				}
+			}
+			if dot < bamboo && dot < character {
+				r.abandonSuits[i] = suitDot
+			} else if bamboo < character {
+				r.abandonSuits[i] = suitBamboo
+			} else {
+				r.abandonSuits[i] = suitCharacter
+			}
+		}
+	}
+}
+
+func (r *room) goToPlaying() {
+	var ok = true
+	for _, suit := range r.abandonSuits {
+		if 0 == suit {
+			ok = false
+		}
+	}
+	if ok {
+		r.phase = roomPhasePlaying
+		r.updateChan <- true
+	}
+}
+
 func (r *room) play() {
 	for {
 		<-r.updateChan
@@ -153,6 +211,14 @@ func (r *room) play() {
 				r.updateChan <- true
 			})
 		case roomPhaseMakeAAbandon:
+			time.AfterFunc(1*time.Second, func() {
+				r.autoAbandonSuit()
+				r.goToPlaying()
+			})
+			time.AfterFunc(10*time.Second, func() {
+				r.forceAbandonSuit()
+				r.goToPlaying()
+			})
 		case roomPhasePlaying:
 		case roomPhaseSettle:
 		default:

@@ -13,6 +13,7 @@ import (
 
 //Module gate module
 type Module struct {
+	skelection module.Skelecton
 }
 
 //NewModule new gate module
@@ -25,14 +26,21 @@ func NewModule() *Module {
 //OnInit module init
 func (m *Module) OnInit() {
 	glog.Info("user init")
+	m.skelection.Run(m)
 }
 
 //OnDestroy module destroy
 func (m *Module) OnDestroy() {
+	m.skelection.Stop()
 }
 
 //OnEvent module event
 func (m *Module) OnEvent(msg *module.Message) {
+	m.skelection.Add(msg)
+}
+
+//OnMsg module message
+func (m *Module) OnMsg(msg *module.Message) {
 	connID := module.GetConnectID(msg.Payload)
 	clientData := module.GetClientData(msg.Payload)
 	switch msg.Type {

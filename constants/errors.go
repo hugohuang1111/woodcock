@@ -3,24 +3,26 @@ package constants
 const (
 	ERROR_SUCCESS = 0
 	//client error
-	ERROR_MSG_FORMAT_ERROR = 1000
-	ERROR_REGISTER_FAIL    = 1001
-	ERROR_PARAM_NIL        = 1002
-	ERROR_LOGIN_FAIL       = 1003
-	ERROR_PARAM_WRONG      = 1004
-	ERROR_NOT_AUTHOR       = 1005
-	ERROR_ROOM_FULL        = 1006
+	ERROR_MSG_FORMAT_ERROR  = 1000
+	ERROR_REGISTER_FAIL     = 1001
+	ERROR_PARAM_NIL         = 1002
+	ERROR_LOGIN_FAIL        = 1003
+	ERROR_PARAM_WRONG       = 1004
+	ERROR_NOT_AUTHOR        = 1005
+	ERROR_ROOM_FULL         = 1006
+	ERROR_ABANDON_SUIT_FAIL = 1007
 )
 
 var (
 	ErrorMap = map[int]string{
-		ERROR_MSG_FORMAT_ERROR: "msg format error",
-		ERROR_REGISTER_FAIL:    "register failed",
-		ERROR_PARAM_NIL:        "param is nil",
-		ERROR_LOGIN_FAIL:       "login failed",
-		ERROR_PARAM_WRONG:      "param wrong",
-		ERROR_NOT_AUTHOR:       "not authorize",
-		ERROR_ROOM_FULL:        "user full in room",
+		ERROR_MSG_FORMAT_ERROR:  "msg format error",
+		ERROR_REGISTER_FAIL:     "register failed",
+		ERROR_PARAM_NIL:         "param is nil",
+		ERROR_LOGIN_FAIL:        "login failed",
+		ERROR_PARAM_WRONG:       "param wrong",
+		ERROR_NOT_AUTHOR:        "not authorize",
+		ERROR_ROOM_FULL:         "user full in room",
+		ERROR_ABANDON_SUIT_FAIL: "abandon suit failed",
 	}
 )
 

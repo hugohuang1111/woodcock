@@ -36,6 +36,6 @@ func run() {
 			glog.Warning("router can't find module: ", msg.Recver)
 			continue
 		}
-		go m.OnEvent(msg)
+		m.OnEvent(msg)
 	}
 }

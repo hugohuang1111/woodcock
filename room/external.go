@@ -12,6 +12,7 @@ import (
 
 //Module room module
 type Module struct {
+	skelection *module.Skelecton
 }
 
 //NewModule new room module
@@ -24,14 +25,21 @@ func NewModule() *Module {
 //OnInit module init
 func (m *Module) OnInit() {
 	glog.Info("room init")
+	m.skelection.Run(m)
 }
 
 //OnDestroy module destroy
 func (m *Module) OnDestroy() {
+	m.skelection.Stop()
 }
 
 //OnEvent module event
 func (m *Module) OnEvent(msg *module.Message) {
+	m.skelection.Add(msg)
+}
+
+//OnMsg module skelection interface
+func (m *Module) OnMsg(msg *module.Message) {
 	connID := module.GetConnectID(msg.Payload)
 	uID := module.GetUserID(msg.Payload)
 	clientData := module.GetClientData(msg.Payload)
@@ -78,6 +86,9 @@ func (m *Module) OnEvent(msg *module.Message) {
 			resp = entry(connID, uID, 0, clientData)
 		case "leave":
 			resp = leave(connID, uID, clientData)
+		case "abanbonSuit":
+			uID := module.GetUserID(msg.Payload)
+			resp = leave(connID, uID, clientData)
 		default:
 			glog.Error("user unknow cmd:", cmd)
 		}
@@ -88,6 +99,7 @@ func (m *Module) OnEvent(msg *module.Message) {
 	default:
 		glog.Error("room unknow msg type:", msg.Type)
 	}
+
 }
 
 func (m *Module) send(msg *module.Message, payload map[string]interface{}) {
