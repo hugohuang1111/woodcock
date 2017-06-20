@@ -12,7 +12,7 @@ import (
 
 //Module room module
 type Module struct {
-	skelection *module.Skelecton
+	skelection module.Skelecton
 }
 
 //NewModule new room module
@@ -24,7 +24,6 @@ func NewModule() *Module {
 
 //OnInit module init
 func (m *Module) OnInit() {
-	glog.Info("room init")
 	m.skelection.Run(m)
 }
 
@@ -88,9 +87,9 @@ func (m *Module) OnMsg(msg *module.Message) {
 			resp = leave(connID, uID, clientData)
 		case "abanbonSuit":
 			uID := module.GetUserID(msg.Payload)
-			resp = leave(connID, uID, clientData)
+			resp = abandonSuit(uID, clientData)
 		default:
-			glog.Error("user unknow cmd:", cmd)
+			glog.Error("room unknow cmd:", cmd)
 		}
 
 		if nil != resp {

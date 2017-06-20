@@ -137,6 +137,10 @@ func (r *room) abandonSuit(userID uint64, suit int) error {
 }
 
 func (r *room) forceAbandonSuit() {
+	if roomPhaseMakeAAbandon != r.phase {
+		return
+	}
+	glog.Info("force abandon suit")
 	for i, suit := range r.abandonSuits {
 		if 0 == suit {
 			var dot int
@@ -164,6 +168,10 @@ func (r *room) forceAbandonSuit() {
 }
 
 func (r *room) goToPlaying() {
+	if roomPhaseMakeAAbandon != r.phase {
+		return
+	}
+	glog.Info("go to playing ", r.abandonSuits)
 	var ok = true
 	for _, suit := range r.abandonSuits {
 		if 0 == suit {
@@ -369,6 +377,8 @@ func (r *room) broadcastScene() {
 		if info, ok := userConnMap[uid]; ok && 0 != info.connID {
 			msg.Payload[module.PayloadKeyConnectID] = info.connID
 			router.Route(msg)
+		} else {
+			glog.Infof("user %d room %d not broadcast", uid, info.connID)
 		}
 	}
 }

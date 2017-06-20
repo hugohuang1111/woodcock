@@ -34,7 +34,7 @@ func runServerWS() {
 	wsUpgrader.CheckOrigin = func(r *http.Request) bool {
 		return true
 	}
-	httpServer.Serve(listener)
+	go httpServer.Serve(listener)
 }
 
 // StopWS -- stop websocker server

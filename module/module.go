@@ -1,9 +1,5 @@
 package module
 
-import (
-	"github.com/golang/glog"
-)
-
 //Module module interface
 type Module interface {
 	OnInit()
@@ -36,7 +32,6 @@ func Find(name string) Module {
 //Run run
 func Run() {
 	for _, m := range modMap {
-		glog.Info("run module")
 		m.OnInit()
 	}
 }

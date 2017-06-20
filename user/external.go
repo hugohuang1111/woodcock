@@ -25,7 +25,6 @@ func NewModule() *Module {
 
 //OnInit module init
 func (m *Module) OnInit() {
-	glog.Info("user init")
 	m.skelection.Run(m)
 }
 

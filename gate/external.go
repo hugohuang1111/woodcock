@@ -19,7 +19,6 @@ func NewModule() *Module {
 
 //OnInit module init
 func (m *Module) OnInit() {
-	glog.Info("gate init")
 	m.skelection.Run(m)
 	runServerWS()
 }
