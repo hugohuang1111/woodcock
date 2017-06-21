@@ -140,7 +140,6 @@ func (r *room) forceAbandonSuit() {
 	if roomPhaseMakeAAbandon != r.phase {
 		return
 	}
-	glog.Info("force abandon suit")
 	for i, suit := range r.abandonSuits {
 		if 0 == suit {
 			var dot int
@@ -171,7 +170,6 @@ func (r *room) goToPlaying() {
 	if roomPhaseMakeAAbandon != r.phase {
 		return
 	}
-	glog.Info("go to playing ", r.abandonSuits)
 	var ok = true
 	for _, suit := range r.abandonSuits {
 		if 0 == suit {
@@ -179,6 +177,7 @@ func (r *room) goToPlaying() {
 		}
 	}
 	if ok {
+		r.sortHoldTiles()
 		r.phase = roomPhasePlaying
 		r.updateChan <- true
 	}
@@ -281,16 +280,19 @@ func (r *room) shuffleAndDealingTiles() {
 	grabStartPos *= 2
 
 	start, _ := walls[grabStartChair]["start"]
-	start += grabStartPos
+	end := start + walls[grabStartChair]["length"]
+	end--
+	start = end - grabStartPos
 
 	grabTiles := func(start, len int) (arr []int, pos int) {
 		arr = make([]int, 0, len)
 		p := start
 		for i := 0; i < len; i++ {
+			p += 108
 			p %= 108
 			arr = append(arr, rawCards[p])
 			rawCards[p] = -1
-			p++
+			p--
 		}
 
 		pos = p
@@ -338,15 +340,16 @@ func (r *room) shuffleAndDealingTiles() {
 		}
 		r.userTiles.WallTiles[i] = wallTiles
 	}
-	r.sortTiles()
+	r.sortHoldTiles()
 }
 
-func (r *room) sortTiles() {
-	tiles := new(sortTiles)
-	for _, hold := range r.userTiles.HoldTiles {
-		tiles.tiles = hold
-		sort.Sort(tiles)
+func (r *room) sortHoldTiles() {
+	resaved := r.current
+	for i := range r.users {
+		r.current = i
+		sort.Sort(r)
 	}
+	r.current = resaved
 }
 
 func (r *room) broadcastScene() {
@@ -377,31 +380,28 @@ func (r *room) broadcastScene() {
 		if info, ok := userConnMap[uid]; ok && 0 != info.connID {
 			msg.Payload[module.PayloadKeyConnectID] = info.connID
 			router.Route(msg)
-		} else {
-			glog.Infof("user %d room %d not broadcast", uid, info.connID)
 		}
 	}
 }
 
-type sortTiles struct {
-	tiles []tile
+func (r *room) Len() int {
+	return len(r.userTiles.HoldTiles[r.current])
 }
 
-func (t *sortTiles) Len() int {
-	return len(t.tiles)
-}
-
-func (t *sortTiles) Less(i, j int) bool {
-	if t.tiles[i].Suit < t.tiles[j].Suit {
-		return true
-	} else if t.tiles[i].Suit > t.tiles[j].Suit {
+func (r *room) Less(i, j int) bool {
+	tiles := r.userTiles.HoldTiles[r.current]
+	if tiles[i].Suit == tiles[j].Suit {
+		return tiles[i].Rank < tiles[j].Rank
+	} else if tiles[i].Suit == r.abandonSuits[r.current] {
 		return false
-	} else if t.tiles[i].Rank < t.tiles[j].Rank {
+	} else if tiles[j].Suit == r.abandonSuits[r.current] {
 		return true
 	}
-	return false
+	return tiles[i].Suit < tiles[j].Suit
+
 }
 
-func (t *sortTiles) Swap(i, j int) {
-	t.tiles[i], t.tiles[j] = t.tiles[j], t.tiles[i]
+func (r *room) Swap(i, j int) {
+	tiles := r.userTiles.HoldTiles[r.current]
+	tiles[i], tiles[j] = tiles[j], tiles[i]
 }

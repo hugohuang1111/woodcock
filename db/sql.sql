@@ -6,14 +6,14 @@
 -- DROP USER 'poker'@'localhost';
 
 -- create user
-CREATE USER 'poker'@'localhost' IDENTIFIED BY 'poker1111';
+CREATE USER 'woodcock'@'localhost' IDENTIFIED BY 'woodcock1111';
 
 -- create database
-CREATE DATABASE poker COLLATE 'utf8_general_ci';
-GRANT ALL ON poker.* TO 'poker'@'localhost';
+CREATE DATABASE woodcock COLLATE 'utf8_general_ci';
+GRANT ALL ON woodcock.* TO 'woodcock'@'localhost';
 
 -- select database
-USE poker;
+USE woodcock;
 
 ALTER TABLE user AUTO_INCREMENT=10001;
 -- create user table

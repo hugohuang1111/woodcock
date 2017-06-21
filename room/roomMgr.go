@@ -83,7 +83,6 @@ func abandonSuit(uID uint64, payload []byte) map[string]interface{} {
 		constants.SetRespError(resp, constants.ERROR_ABANDON_SUIT_FAIL)
 	}
 
-	delete(userConnMap, uID)
 	return resp
 
 }
